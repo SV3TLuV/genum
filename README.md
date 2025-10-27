@@ -2,6 +2,10 @@
 
 **Genum** is a code generation tool for Go that automatically creates type-safe enum methods.
 
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 ## Features
 
 - 🚀 **Zero Boilerplate** - Focus on your types, not repetitive code
