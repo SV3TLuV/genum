@@ -40,8 +40,9 @@ func (e {{.TypeName}}) Values() []{{.TypeName}} {
 }
 
 func (e {{.TypeName}}) Names() []string {
+	{{$trimPrefix := .TrimPrefix -}}
 	return []string{
-{{range .Values}}		"{{removePrefix $.TrimPrefix .Name}}",
+{{range .Values}}		"{{removePrefix $trimPrefix .Name}}",
 {{end}}	}
 }
 {{end}}

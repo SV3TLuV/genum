@@ -11,17 +11,17 @@ import (
 )
 
 type File struct {
-	Package    string
-	Source     string
-	Output     string
-	TrimPrefix string
-	Enums      []Enum
+	Package string
+	Source  string
+	Output  string
+	Enums   []Enum
 }
 
 type Enum struct {
-	TypeName string
-	BaseType string
-	Values   []EnumValue
+	TypeName   string
+	BaseType   string
+	TrimPrefix string
+	Values     []EnumValue
 }
 
 type EnumValue struct {
@@ -51,13 +51,14 @@ func (p *Parser) Parse(env *Environment) ([]File, error) {
 			return nil, fmt.Errorf("failed to parse enum %s: %w", directive.TypeName, err)
 		}
 
+		enum.TrimPrefix = directive.TrimPrefix
+
 		if _, ok := files[directive.OutputFile]; !ok {
 			files[directive.OutputFile] = &File{
-				Package:    env.PackageName(),
-				Source:     env.SourceFileName,
-				Output:     directive.OutputFile,
-				TrimPrefix: directive.TrimPrefix,
-				Enums:      []Enum{},
+				Package: env.PackageName(),
+				Source:  env.SourceFileName,
+				Output:  directive.OutputFile,
+				Enums:   []Enum{},
 			}
 		}
 		files[directive.OutputFile].Enums = append(files[directive.OutputFile].Enums, *enum)
