@@ -33,13 +33,13 @@ func (e {{.TypeName}}) Value() {{.BaseType}} {
     return {{.BaseType}}(e)
 }
 
-func (e {{.TypeName}}) Values() []{{.TypeName}} {
+func {{.TypeName}}Values() []{{.TypeName}} {
 	return []{{.TypeName}}{
 {{range .Values}}		{{.Name}},
 {{end}}	}
 }
 
-func (e {{.TypeName}}) Names() []string {
+func {{.TypeName}}Names() []string {
 	{{$trimPrefix := .TrimPrefix -}}
 	return []string{
 {{range .Values}}		"{{removePrefix $trimPrefix .Name}}",

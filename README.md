@@ -99,7 +99,7 @@ func (e Color) Value() string {
     return string(e)
 }
 
-func (e Color) Values() []Color {
+func ColorValues() []Color {
     return []Color{
         ColorRed,
         ColorBlack,
@@ -107,7 +107,7 @@ func (e Color) Values() []Color {
     }
 }
 
-func (e Color) Names() []string {
+func ColorNames() []string {
     return []string{
         "Red",
         "Black",
@@ -141,14 +141,14 @@ func (e Status) Value() uint8 {
     return uint8(e)
 }
 
-func (e Status) Values() []Status {
+func StatusValues() []Status {
     return []Status{
         Created,
         Deleted,
     }
 }
 
-func (e Status) Names() []string {
+func StatusNames() []string {
     return []string{
         "Created",
         "Deleted",
