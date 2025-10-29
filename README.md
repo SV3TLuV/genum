@@ -78,7 +78,9 @@ go generate ./...
 // Source: enum.go
 package enum
 
-import "fmt"
+import (
+	"fmt"
+)
 
 
 // === Color ===
@@ -86,42 +88,42 @@ import "fmt"
 var _defaultColor Color
 
 func ParseColor(v string) (Color, error) {
-    value := Color(v)
-    if !value.IsValid() {
-        return _defaultColor, fmt.Errorf("invalid Color: %v", v)
-    }
-    return value, nil
+	value := Color(v)
+	if value.IsValid() {
+		return value, nil
+	}
+	return _defaultColor, fmt.Errorf("invalid Color: %v", v)
 }
 
 func (e Color) IsValid() bool {
-    switch e {
-    case 
-        ColorRed,
-        ColorBlack,
-        ColorWhite:
-        return true
-    }
-    return false
+	switch e {
+	case
+		ColorRed,
+		ColorBlack,
+		ColorWhite:
+		return true
+	}
+	return false
 }
 
 func (e Color) Value() string {
-    return string(e)
+	return string(e)
 }
 
 func ColorValues() []Color {
-    return []Color{
-        ColorRed,
-        ColorBlack,
-        ColorWhite,
-    }
+	return []Color{
+		ColorRed,
+		ColorBlack,
+		ColorWhite,
+	}
 }
 
 func ColorNames() []string {
-    return []string{
-        "Red",
-        "Black",
-        "White",
-    }
+	return []string{
+		"Red",
+		"Black",
+		"White",
+	}
 }
 
 // === Status ===
@@ -129,38 +131,38 @@ func ColorNames() []string {
 var _defaultStatus Status
 
 func ParseStatus(v uint8) (Status, error) {
-    value := Status(v)
-    if !value.IsValid() {
-        return _defaultStatus, fmt.Errorf("invalid Status: %v", v)
-    }
-    return value, nil
+	value := Status(v)
+	if value.IsValid() {
+		return value, nil
+	}
+	return _defaultStatus, fmt.Errorf("invalid Status: %v", v)
 }
 
 func (e Status) IsValid() bool {
-    switch e {
-    case 
-        Created,
-        Deleted:
-        return true
-    }
-    return false
+	switch e {
+	case
+		Created,
+		Deleted:
+		return true
+	}
+	return false
 }
 
 func (e Status) Value() uint8 {
-    return uint8(e)
+	return uint8(e)
 }
 
 func StatusValues() []Status {
-    return []Status{
-        Created,
-        Deleted,
-    }
+	return []Status{
+		Created,
+		Deleted,
+	}
 }
 
 func StatusNames() []string {
-    return []string{
-        "Created",
-        "Deleted",
-    }
+	return []string{
+		"Created",
+		"Deleted",
+	}
 }
 ```
