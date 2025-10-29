@@ -23,6 +23,8 @@ type Generator struct {
 
 func NewGenerator() *Generator {
 	funcMap := template.FuncMap{
+		"lower": strings.ToLower,
+		"upper": strings.ToUpper,
 		"title": cases.Title(language.English).String,
 		"removePrefix": func(typeName, name string) string {
 			return strings.TrimPrefix(name, typeName)

@@ -15,12 +15,15 @@ type File struct {
 	Source  string
 	Output  string
 	Enums   []Enum
+
+	NeedStringsPackage bool
 }
 
 type Enum struct {
 	TypeName   string
 	BaseType   string
 	TrimPrefix string
+	Case       string
 	Values     []EnumValue
 }
 
@@ -52,14 +55,23 @@ func (p *Parser) Parse(env *Environment) ([]File, error) {
 		}
 
 		enum.TrimPrefix = directive.TrimPrefix
+		enum.Case = string(directive.Case)
 
 		if _, ok := files[directive.OutputFile]; !ok {
-			files[directive.OutputFile] = &File{
+			file := &File{
 				Package: env.PackageName(),
 				Source:  env.SourceFileName,
 				Output:  directive.OutputFile,
 				Enums:   []Enum{},
 			}
+
+			if !file.NeedStringsPackage {
+				file.NeedStringsPackage =
+					directive.Case != CaseSensitive &&
+						enum.BaseType == "string"
+			}
+
+			files[directive.OutputFile] = file
 		}
 		files[directive.OutputFile].Enums = append(files[directive.OutputFile].Enums, *enum)
 	}
