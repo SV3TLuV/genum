@@ -53,7 +53,7 @@ func TestParseFromComment(t *testing.T) {
 			expected: &Directive{
 				TypeName:   "Color",
 				OutputFile: "color_genum.go",
-				TrimPrefix: "",
+				TrimPrefix: "Color",
 			},
 		},
 		{
@@ -63,7 +63,7 @@ func TestParseFromComment(t *testing.T) {
 			expected: &Directive{
 				TypeName:   "Role",
 				OutputFile: "role_gen.go",
-				TrimPrefix: "",
+				TrimPrefix: "Role",
 			},
 		},
 		{
@@ -142,7 +142,7 @@ func TestParseFromComment(t *testing.T) {
 			expected: &Directive{
 				TypeName:   "Complex=Type",
 				OutputFile: "file=with=equals.go",
-				TrimPrefix: "",
+				TrimPrefix: "Complex=Type",
 			},
 		},
 		{

@@ -34,6 +34,15 @@ Available flags:
   -trimprefix string (optional)
         Removes the specified prefix from all enum value names  
         If not provided, uses the enum type name as the prefix
+  
+  -case string (optional)
+        Controls case handling for string enum parsing
+        Available values: sensitive, ignore, lower, upper
+        If not provided, defaults to "sensitive"
+        - sensitive: case-sensitive matching (default)
+        - ignore: case-insensitive matching
+        - lower: converts input to lowercase before matching
+        - upper: converts input to uppercase before matching
 ```
 
 **enum.go**:

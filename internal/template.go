@@ -5,7 +5,12 @@ const enumTemplate string = `
 // Source: {{.Source}}
 package {{.Package}}
 
-import "fmt"
+import (
+	"fmt"
+	{{- if .NeedStringsPackage}}
+	"strings"
+	{{- end}}
+)
 
 {{range .Enums}}
 // === {{.TypeName}} ===
@@ -14,12 +19,35 @@ var _default{{.TypeName | title}} {{.TypeName}}
 
 func Parse{{.TypeName}}(v {{.BaseType}}) ({{.TypeName}}, error) {
     value := {{.TypeName}}(v)
-    if !value.IsValid() {
-        return _default{{.TypeName | title}}, fmt.Errorf("invalid {{.TypeName}}: %v", v)
+    if value.IsValid() {
+		return value, nil
     }
-    return value, nil
+	{{if and (ne .Case "sensitive") (eq .BaseType "string") -}}
+	return parse{{.TypeName}}WithCase(v)
+	{{- else -}}
+	return _default{{.TypeName | title}}, fmt.Errorf("invalid {{.TypeName}}: %v", v)
+	{{- end}}
 }
-
+{{if and (ne .Case "sensitive") (eq .BaseType "string")}}
+func parse{{.TypeName}}WithCase(v {{.BaseType}}) ({{.TypeName}}, error) {
+    {{if or (eq .Case "lower") (eq .Case "ignore") -}}
+    switch strings.ToLower(v) {
+	{{range .Values -}}
+	case "{{lower .Value}}":
+		return {{.Name}}, nil
+	{{end -}}
+    }
+    {{- else if eq .Case "upper" -}}
+    switch strings.ToUpper(v) {
+	{{range .Values -}}
+	case "{{upper .Value}}":
+		return {{.Name}}, nil
+	{{end -}}
+    }
+    {{- end}}
+    return _default{{.TypeName | title}}, fmt.Errorf("invalid {{.TypeName}}: %v", v)
+}
+{{- end}}
 func (e {{.TypeName}}) IsValid() bool {
 	switch e {
 	case {{$first := index .Values 0}}{{range $i, $v := .Values}}{{if $i}},{{end}}
