@@ -237,3 +237,87 @@ func TestIsGenumDirective(t *testing.T) {
 		})
 	}
 }
+
+func TestCaseHandling_IsValid(t *testing.T) {
+	tests := []struct {
+		name    string
+		value   CaseHandling
+		isValid bool
+	}{
+		{"valid: CaseSensitive", CaseSensitive, true},
+		{"valid: CaseIgnore", CaseIgnore, true},
+		{"valid: CaseLower", CaseLower, true},
+		{"valid: CaseUpper", CaseUpper, true},
+		{"not valid: random", CaseHandling("foobar"), false},
+		{"not valid: empty", CaseHandling(""), false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.isValid, tt.value.IsValid())
+		})
+	}
+}
+
+func TestParseFlags(t *testing.T) {
+	tests := []struct {
+		name          string
+		comment       string
+		expected      map[string]string
+		expectError   bool
+		errorContains string
+	}{
+		{
+			name:    "all fields",
+			comment: "//go:generate genum -type=Role -output=out.go -case=sensitive",
+			expected: map[string]string{
+				"-type":   "Role",
+				"-output": "out.go",
+				"-case":   "sensitive",
+			},
+		},
+		{
+			name:    "fields with quotes",
+			comment: "//go:generate genum -type='Role' -output=\"out.go\"",
+			expected: map[string]string{
+				"-type":   "Role",
+				"-output": "out.go",
+			},
+		},
+		{
+			name:          "missing equal sign error",
+			comment:       "//go:generate genum -type",
+			expectError:   true,
+			errorContains: "invalid argument",
+		},
+		{
+			name:    "empty value",
+			comment: "//go:generate genum -type=",
+			expected: map[string]string{
+				"-type": "",
+			},
+		},
+		{
+			name:    "multiple equals in value",
+			comment: "//go:generate genum -type=Foo=Bar -output=x.go",
+			expected: map[string]string{
+				"-type":   "Foo=Bar",
+				"-output": "x.go",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			flags, err := ParseFlags(tt.comment)
+			if tt.expectError {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errorContains)
+				return
+			}
+			require.NoError(t, err)
+			for k, v := range tt.expected {
+				assert.Equal(t, v, flags[k])
+			}
+		})
+	}
+}

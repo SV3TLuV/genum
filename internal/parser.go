@@ -123,14 +123,13 @@ func (p *Parser) ParseSingleEnum(pkg *packages.Package, directive *Directive) (*
 
 func (p *Parser) ParseConstants(pkg *packages.Package, typeName string) []EnumValue {
 	var values []EnumValue
-	var currentType string
 
 	for _, file := range pkg.Syntax {
 		ast.Inspect(file, func(n ast.Node) bool {
 			switch node := n.(type) {
 			case *ast.GenDecl:
 				if node.Tok == token.CONST {
-					currentType = p.ProcessConstGroup(node, typeName, &values, currentType)
+					p.ProcessConstGroupWithTypes(pkg, node, typeName, &values)
 				}
 			}
 			return true
@@ -140,8 +139,20 @@ func (p *Parser) ParseConstants(pkg *packages.Package, typeName string) []EnumVa
 	return values
 }
 
-func (p *Parser) ProcessConstGroup(decl *ast.GenDecl, targetType string, values *[]EnumValue, lastType string) string {
-	currentType := lastType
+func (p *Parser) ProcessConstGroupWithTypes(pkg *packages.Package, decl *ast.GenDecl, targetType string, values *[]EnumValue) {
+	var targetTypeObj *types.TypeName
+	scope := pkg.Types.Scope()
+	for _, name := range scope.Names() {
+		obj := scope.Lookup(name)
+		if typeName, ok := obj.(*types.TypeName); ok && typeName.Name() == targetType {
+			targetTypeObj = typeName
+			break
+		}
+	}
+
+	if targetTypeObj == nil {
+		return
+	}
 
 	for _, spec := range decl.Specs {
 		valueSpec, ok := spec.(*ast.ValueSpec)
@@ -149,63 +160,45 @@ func (p *Parser) ProcessConstGroup(decl *ast.GenDecl, targetType string, values 
 			continue
 		}
 
-		if valueSpec.Type != nil {
-			if ident, ok := valueSpec.Type.(*ast.Ident); ok {
-				currentType = ident.Name
-			}
-		} else if len(valueSpec.Values) > 0 {
-			currentType = p.ExtractTypeFromValue(valueSpec.Values[0])
-			if currentType == "" {
+		for i, name := range valueSpec.Names {
+			obj := pkg.TypesInfo.Defs[name]
+			if obj == nil {
 				continue
 			}
-		}
 
-		if currentType == targetType {
-			for i, name := range valueSpec.Names {
-				if ast.IsExported(name.Name) {
-					value := p.ExtractValue(valueSpec, i)
-					*values = append(*values, EnumValue{
-						Name:  name.Name,
-						Value: value,
-					})
-				}
+			if !types.Identical(obj.Type(), targetTypeObj.Type()) {
+				continue
+			}
+
+			var value string
+			if len(valueSpec.Values) > i {
+				value = p.extractConstantValue(pkg, valueSpec.Values[i])
+			} else {
+				value = name.Name
+			}
+
+			if ast.IsExported(name.Name) {
+				*values = append(*values, EnumValue{
+					Name:  name.Name,
+					Value: value,
+				})
 			}
 		}
 	}
-
-	return currentType
 }
 
-func (p *Parser) ExtractTypeFromValue(expr ast.Expr) string {
-	switch v := expr.(type) {
-	case *ast.CallExpr:
-		if ident, ok := v.Fun.(*ast.Ident); ok {
-			return ident.Name
-		}
+func (p *Parser) extractConstantValue(pkg *packages.Package, expr ast.Expr) string {
+	if tv, ok := pkg.TypesInfo.Types[expr]; ok && tv.Value != nil {
+		return strings.Trim(tv.Value.ExactString(), `"`)
 	}
-	return ""
-}
 
-func (p *Parser) ExtractValue(spec *ast.ValueSpec, index int) string {
-	if len(spec.Values) <= index {
-		return spec.Names[index].Name
-	}
-	return p.extractValueFromExpr(spec.Values[index], spec.Names[index].Name)
-}
-
-func (p *Parser) extractValueFromExpr(expr ast.Expr, defaultValue string) string {
 	switch v := expr.(type) {
 	case *ast.BasicLit:
 		return strings.Trim(v.Value, `"`)
 	case *ast.Ident:
 		return v.Name
-	case *ast.CallExpr:
-		if len(v.Args) == 0 {
-			return defaultValue
-		}
-		return p.extractValueFromExpr(v.Args[0], defaultValue)
 	default:
-		return defaultValue
+		return ""
 	}
 }
 
