@@ -153,14 +153,20 @@ func (p *Parser) ProcessConstGroup(decl *ast.GenDecl, targetType string, values 
 			if ident, ok := valueSpec.Type.(*ast.Ident); ok {
 				currentType = ident.Name
 			}
+		} else if len(valueSpec.Values) > 0 {
+			currentType = p.ExtractTypeFromValue(valueSpec.Values[0])
+			if currentType == "" {
+				continue
+			}
 		}
 
 		if currentType == targetType {
-			for _, name := range valueSpec.Names {
+			for i, name := range valueSpec.Names {
 				if ast.IsExported(name.Name) {
+					value := p.ExtractValue(valueSpec, i)
 					*values = append(*values, EnumValue{
 						Name:  name.Name,
-						Value: p.ExtractValue(valueSpec),
+						Value: value,
 					})
 				}
 			}
@@ -170,18 +176,36 @@ func (p *Parser) ProcessConstGroup(decl *ast.GenDecl, targetType string, values 
 	return currentType
 }
 
-func (p *Parser) ExtractValue(spec *ast.ValueSpec) string {
-	if len(spec.Values) == 0 {
-		return spec.Names[0].Name
+func (p *Parser) ExtractTypeFromValue(expr ast.Expr) string {
+	switch v := expr.(type) {
+	case *ast.CallExpr:
+		if ident, ok := v.Fun.(*ast.Ident); ok {
+			return ident.Name
+		}
 	}
+	return ""
+}
 
-	switch v := spec.Values[0].(type) {
+func (p *Parser) ExtractValue(spec *ast.ValueSpec, index int) string {
+	if len(spec.Values) <= index {
+		return spec.Names[index].Name
+	}
+	return p.extractValueFromExpr(spec.Values[index], spec.Names[index].Name)
+}
+
+func (p *Parser) extractValueFromExpr(expr ast.Expr, defaultValue string) string {
+	switch v := expr.(type) {
 	case *ast.BasicLit:
 		return strings.Trim(v.Value, `"`)
 	case *ast.Ident:
 		return v.Name
+	case *ast.CallExpr:
+		if len(v.Args) == 0 {
+			return defaultValue
+		}
+		return p.extractValueFromExpr(v.Args[0], defaultValue)
 	default:
-		return spec.Names[0].Name
+		return defaultValue
 	}
 }
 
