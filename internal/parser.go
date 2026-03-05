@@ -57,23 +57,24 @@ func (p *Parser) Parse(env *Environment) ([]File, error) {
 		enum.TrimPrefix = directive.TrimPrefix
 		enum.Case = string(directive.Case)
 
-		if _, ok := files[directive.OutputFile]; !ok {
-			file := &File{
+		file, ok := files[directive.OutputFile]
+		if !ok {
+			file = &File{
 				Package: env.PackageName(),
 				Source:  env.SourceFileName,
 				Output:  directive.OutputFile,
 				Enums:   []Enum{},
 			}
-
-			if !file.NeedStringsPackage {
-				file.NeedStringsPackage =
-					directive.Case != CaseSensitive &&
-						enum.BaseType == "string"
-			}
-
 			files[directive.OutputFile] = file
 		}
-		files[directive.OutputFile].Enums = append(files[directive.OutputFile].Enums, *enum)
+
+		if !file.NeedStringsPackage {
+			file.NeedStringsPackage =
+				directive.Case != CaseSensitive &&
+					enum.BaseType == "string"
+		}
+
+		file.Enums = append(file.Enums, *enum)
 	}
 
 	out := make([]File, 0, len(files))
